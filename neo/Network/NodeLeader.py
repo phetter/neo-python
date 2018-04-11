@@ -18,10 +18,29 @@ class NeoClientFactory(ReconnectingClientFactory):
 
     def clientConnectionFailed(self, connector, reason):
         address = "%s:%s" % (connector.host, connector.port)
-        logger.debug("Dropped connection from %s " % address)
-        for peer in NodeLeader.Instance().Peers:
+        logger.info("Dropped connection from %s " % address)
+        nl = NodeLeader.Instance()
+
+        if address in nl.ADDRS:
+            nl.ADDRS.remove(address)
+
+        if address in nl.PendingPeers:
+            nl.PendingPeers.remove(address)
+
+        for peer in nl.Peers:
             if peer.Address == address:
                 peer.connectionLost()
+
+    def clientConnectionLost(self, connector, unused_reason):
+        address = "%s:%s" % (connector.host, connector.port)
+        logger.info("********** Connection lost from %s " % address)
+
+        nl = NodeLeader.Instance()
+        if address in nl.ADDRS:
+            nl.ADDRS.remove(address)
+
+        if address in nl.PendingPeers:
+            nl.PendingPeers.remove(address)
 
 
 class NodeLeader():

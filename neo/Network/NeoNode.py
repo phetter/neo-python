@@ -15,7 +15,7 @@ from .Payloads.NetworkAddressWithTime import NetworkAddressWithTime
 from .Payloads.VersionPayload import VersionPayload
 from .InventoryType import InventoryType
 from neo.Settings import settings
-
+import random
 
 MODE_MAINTAIN = 7
 MODE_CATCHUP = 1
@@ -311,7 +311,9 @@ class NeoNode(Protocol):
         """Process response of `self.RequestPeerInfo`."""
         addrs = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.AddrPayload.AddrPayload')
 
-        for index, nawt in enumerate(addrs.NetworkAddressesWithTime):
+        addr_list = addrs.NetworkAddressesWithTime[:]
+        random.shuffle(addr_list)
+        for index, nawt in enumerate(addr_list):
             self.leader.RemoteNodePeerReceived(nawt.Address, nawt.Port, index)
 
     def SendPeerInfo(self):
