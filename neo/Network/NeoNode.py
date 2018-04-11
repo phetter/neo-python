@@ -240,7 +240,7 @@ class NeoNode(Protocol):
 
         # ask every 3 minutes for new peers
         self.peer_loop = task.LoopingCall(self.RequestPeerInfo)
-        self.peer_loop.start(120, now=False)
+        self.peer_loop.start(30, now=False)
 
     def AskForMoreHeaders(self):
         # self.Log("asking for more headers...")
@@ -250,7 +250,6 @@ class NeoNode(Protocol):
     def AskForMoreBlocks(self):
 
         distance = BC.Default().HeaderHeight - BC.Default().Height
-
         current_mode = self.sync_mode
 
         if distance > 2000:

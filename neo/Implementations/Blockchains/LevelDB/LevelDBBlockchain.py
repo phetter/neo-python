@@ -55,6 +55,8 @@ class LevelDBBlockchain(Blockchain):
 
     _persisting_block = None
 
+    _tx_per_block_list = None
+
     @property
     def CurrentBlockHash(self):
         try:
@@ -95,12 +97,18 @@ class LevelDBBlockchain(Blockchain):
     def Path(self):
         return self._path
 
+    @property
+    def TXPerBlock(self):
+        avg = sum(self._tx_per_block_list) / len(self._tx_per_block_list)
+        return avg
+
     def __init__(self, path):
         super(LevelDBBlockchain, self).__init__()
         self._path = path
 
         self._header_index = []
         self._header_index.append(Blockchain.GenesisBlock().Header.Hash.ToBytes())
+        self._tx_per_block_list = []
 
         try:
             self._db = plyvel.DB(self._path, create_if_missing=True)
@@ -634,10 +642,11 @@ class LevelDBBlockchain(Blockchain):
 
         to_dispatch = []
 
+        self._tx_per_block_list.append(len(block.Transactions))
+
         with self._db.write_batch() as wb:
 
             wb.put(DBPrefix.DATA_Block + block.Hash.ToBytes(), amount_sysfee_bytes + block.Trim())
-
             for tx in block.Transactions:
 
                 wb.put(DBPrefix.DATA_Transaction + tx.Hash.ToBytes(), block.IndexBytes() + tx.ToArray())
@@ -788,6 +797,9 @@ class LevelDBBlockchain(Blockchain):
 
             for event in to_dispatch:
                 events.emit(event.event_type, event)
+
+            if len(self._tx_per_block_list) > 1000:
+                self._tx_per_block_list.pop(0)
 
     def PersistBlocks(self):
         if not self._paused:

@@ -109,6 +109,8 @@ class SettingsHolder:
 
     VERSION_NAME = "/NEO-PYTHON:%s/" % __version__
 
+    AUTOADAPT_SYNC = True
+
     # Logging settings
     log_level = None
     log_smart_contract_events = False
