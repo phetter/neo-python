@@ -9,7 +9,8 @@ from neo.Network.NeoNode import NeoNode
 from neo.Settings import settings
 from twisted.internet.protocol import Factory, ReconnectingClientFactory
 from twisted.internet import reactor, task
-from datetime import datetime,timedelta
+from datetime import datetime, timedelta
+
 
 class NeoClientFactory(ReconnectingClientFactory):
     protocol = NeoNode
@@ -105,13 +106,12 @@ class NodeLeader():
         if len(self.cache_counts) > 10:
             self.cache_counts.pop(0)
 
-        #check if the last 10 cache counts are the same
+        # check if the last 10 cache counts are the same
         if len(self.cache_counts) == 10 and len(set(self.cache_counts)) == 1 and self.cache_counts[0] != 0:
             logger.warn("SAME 10 CACHE COUNS, RESET!!")
             self.ResetBlockRequestsAndCache()
             self.Shutdown()
             return
-
 
         if settings.AUTOADAPT_SYNC:
             now_time = datetime.utcnow()
@@ -164,7 +164,6 @@ class NodeLeader():
                 if settings.CONNECTED_PEER_MAX != self.orig_peer_max:
                     settings.CONNECTED_PEER_MAX = self.orig_peer_max
 
-
     def Restart(self):
         if len(self.Peers) == 0:
             self.ADDRS = []
@@ -185,7 +184,7 @@ class NodeLeader():
     def RemoteNodePeerReceived(self, host, port, index):
         addr = '%s:%s' % (host, port)
         if len(self.Peers) < settings.CONNECTED_PEER_MAX:
-            if not addr in self.ADDRS:
+            if addr not in self.ADDRS:
                 self.ADDRS.append(addr)
 
             ok = True
@@ -193,7 +192,7 @@ class NodeLeader():
                 if p.Address == addr:
                     ok = False
 
-            if ok and not addr in self.PendingPeers:
+            if ok and addr not in self.PendingPeers:
                 self.PendingPeers.append(addr)
                 reactor.callLater(index * 10, self.SetupConnection, host, port)
 
@@ -236,7 +235,7 @@ class NodeLeader():
 
             if len(self.Peers) < settings.CONNECTED_PEER_MAX:
                 self.Peers.append(peer)
-                if not peer.Address in self.ADDRS:
+                if peer.Address not in self.ADDRS:
                     self.ADDRS.append(peer.Address)
             else:
                 if peer.Address in self.ADDRS:
