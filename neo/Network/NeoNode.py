@@ -15,7 +15,7 @@ from .Payloads.NetworkAddressWithTime import NetworkAddressWithTime
 from .Payloads.VersionPayload import VersionPayload
 from .InventoryType import InventoryType
 from neo.Settings import settings
-import random
+
 
 MODE_MAINTAIN = 7
 MODE_CATCHUP = 1
@@ -39,6 +39,7 @@ class NeoNode(Protocol):
         Create an instance.
         The NeoNode class is the equivalent of the C# RemoteNode.cs class. It represents a single Node connected to the client.
         """
+
         from neo.Network.NodeLeader import NodeLeader
 
         self.leader = NodeLeader.Instance()
@@ -54,8 +55,7 @@ class NeoNode(Protocol):
         self.port = None
         self.identifier = self.leader.NodeCount
         self.leader.NodeCount += 1
-
-        self.Log("New Node created %s " % self.identifier)
+#        print("NEW NODE CREATED!!!! %s " % self.identifier)
 
     def Disconnect(self):
         """Close the connection with the remote node client."""
@@ -100,13 +100,18 @@ class NeoNode(Protocol):
 
         return "%s MB in / %s MB out" % (biM, boM)
 
+#    def makeConnection(self, transport):
+#        self.Log("MAKE CONNECTION %s " % transport)
+#        super(NeoNode, self).makeConnection(transport)
+
     def connectionMade(self):
         """Callback handler from twisted when establishing a new connection."""
         self.endpoint = self.transport.getPeer()
+        self.Log("Connection from %s" % self.endpoint)
+
         self.host = self.endpoint.host
         self.port = int(self.endpoint.port)
         self.leader.AddConnectedPeer(self)
-        self.Log("Connection from %s" % self.endpoint)
 
     def connectionLost(self, reason=None):
         """Callback handler from twisted when a connection was lost."""
@@ -209,7 +214,7 @@ class NeoNode(Protocol):
         Args:
             m (neo.Network.Message):
         """
-
+#        print("handling command %s " % m.Command)
         if m.Command == 'verack':
             self.HandleVerack()
         elif m.Command == 'version':
@@ -219,7 +224,8 @@ class NeoNode(Protocol):
         elif m.Command == 'getdata':
             self.HandleGetDataMessageReceived(m.Payload)
         elif m.Command == 'getblocks':
-            self.HandleGetBlocksMessageReceived(m.Payload)
+            pass
+#            self.HandleGetBlocksMessageReceived(m.Payload)
         elif m.Command == 'inv':
             self.HandleInvMessage(m.Payload)
         elif m.Command == 'block':
@@ -311,10 +317,8 @@ class NeoNode(Protocol):
         """Process response of `self.RequestPeerInfo`."""
         addrs = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.AddrPayload.AddrPayload')
 
-        addr_list = addrs.NetworkAddressesWithTime[:]
-        random.shuffle(addr_list)
-        for index, nawt in enumerate(addr_list):
-            self.leader.RemoteNodePeerReceived(nawt.Address, nawt.Port, index)
+        for nawt in addrs.NetworkAddressesWithTime:
+            self.leader.RemoteNodePeerReceived(nawt)
 
     def SendPeerInfo(self):
 
@@ -492,7 +496,7 @@ class NeoNode(Protocol):
         inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.GetBlocksPayload.GetBlocksPayload')
 
         if not BC.Default().GetHeader(inventory.HashStart):
-            self.Log("Hash %s not found %s " % inventory.HashStart)
+            self.Log("Hash not found %s " % inventory.HashStart)
             return
 
         hashes = []

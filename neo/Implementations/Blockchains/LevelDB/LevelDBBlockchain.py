@@ -47,7 +47,8 @@ class LevelDBBlockchain(Blockchain):
 
     _disposed = False
 
-    _verify_blocks = False
+    _verify_blocks = True
+    _verify_headers = False
 
     # this is the version of the database
     # should not be updated for network version changes
@@ -392,6 +393,9 @@ class LevelDBBlockchain(Blockchain):
 
     def AddBlock(self, block):
 
+        if self._verify_blocks and not block.Verify():
+            return False
+
         if not block.Hash.ToBytes() in self._block_cache:
             self._block_cache[block.Hash.ToBytes()] = block
 
@@ -402,8 +406,6 @@ class LevelDBBlockchain(Blockchain):
 
         if block.Index == header_len:
 
-            if self._verify_blocks and not block.Verify():
-                return False
             self.AddHeader(block.Header)
 
         return True
@@ -569,7 +571,7 @@ class LevelDBBlockchain(Blockchain):
 
             if header.Index < count + len(self._header_index):
                 continue
-            if self._verify_blocks and not header.Verify():
+            if self._verify_headers and not header.Verify():
                 break
 
             count = count + 1
