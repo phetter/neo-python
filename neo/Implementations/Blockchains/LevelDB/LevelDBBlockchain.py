@@ -47,7 +47,7 @@ class LevelDBBlockchain(Blockchain):
 
     _disposed = False
 
-    _verify_blocks = True
+    _verify_blocks = False
     _verify_headers = False
 
     # this is the version of the database

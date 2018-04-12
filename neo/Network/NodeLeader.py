@@ -89,7 +89,7 @@ class NodeLeader():
         self.orig_peer_max = settings.CONNECTED_PEER_MAX
 
         self.ConnectToPeerLoop = task.LoopingCall(self.DoConnectToPeer)
-        self.ConnectToPeerLoop.start(1)
+        self.ConnectToPeerLoop.start(5)
 
     def Restart(self):
         if len(self.Peers) == 0:
@@ -105,7 +105,7 @@ class NodeLeader():
         for idx, bootstrap in enumerate(settings.SEED_LIST):
             self.PendingPeers.add(bootstrap)
             host, port = bootstrap.split(':')
-            self.SetupConnection(host, port)
+            self.SetupConnection(host, port, timeout=10)
 
     def RemoteNodePeerReceived(self, networkAddressWithTime):
         addr = "%s:%s" % (networkAddressWithTime.Address, networkAddressWithTime.Port)
