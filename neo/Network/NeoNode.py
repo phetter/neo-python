@@ -367,11 +367,14 @@ class NeoNode(Protocol):
             inventory (neo.Network.Payloads.InvPayload):
         """
 
+        if not self.sync_mode == MODE_MAINTAIN:
+            return
+
         inventory = IOHelper.AsSerializableWithType(payload, 'neo.Network.Payloads.InvPayload.InvPayload')
 
 #        self.Log("INVENTORy %s " % inventory.Type)
 
-        if inventory.Type == InventoryType.BlockInt and self.sync_mode == MODE_MAINTAIN:
+        if inventory.Type == InventoryType.BlockInt:
 
             ok_hashes = []
             for hash in inventory.Hashes:
