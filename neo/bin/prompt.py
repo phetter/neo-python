@@ -605,6 +605,8 @@ class PromptInterface(object):
         out += "Time elapsed %s mins\n" % mins
         out += "Blocks per min %s \n" % bpm
         out += "TPS: %s \n" % tps
+        out += "Blocks per min average %s \n" % bpm
+        out += "Blocks per min current %s \n" % NodeLeader.Instance().current_bpm
         tokens = [(Token.Number, out)]
         print_tokens(tokens, self.token_style)
 
@@ -909,12 +911,26 @@ class PromptInterface(object):
                 if num_peers > 0:
                     old_max_peers = settings.CONNECTED_PEER_MAX
                     settings.set_max_peers(num_peers)
+                    NodeLeader.Instance().orig_peer_max = num_peers
                     NodeLeader.Instance().OnUpdatedMaxPeers(old_max_peers, num_peers)
-                    print("set max peers to %s " % num_peers)
+#                    print("set max peers to %s " % num_peers)
                 else:
                     print("Please specify integer greater than zero")
             except Exception as e:
                 print("Cannot configure max peers. Please specify an integer greater than 0")
+
+        elif what == 'nreq':
+            try:
+                c1 = int(get_arg(args, 1).lower())
+                nreq = int(c1)
+                if nreq > 0:
+                    print("set num req per node to %s " % nreq)
+                    NodeLeader.Instance().BREQPART = nreq
+                    NodeLeader.Instance().NREQMAX = nreq * 5
+                else:
+                    print("Please specify integer greater than zero")
+            except Exception as e:
+                print("Cannot configure nreq. Please specify an integer greater than 0")
 
         else:
             print(
@@ -1093,7 +1109,7 @@ def main():
     cli = PromptInterface()
 
     # Run things
-#    reactor.suggestThreadPoolSize(15)
+    reactor.suggestThreadPoolSize(15)
     reactor.callInThread(cli.run)
     NodeLeader.Instance().Start()
 

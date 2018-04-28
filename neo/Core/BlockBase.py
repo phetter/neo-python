@@ -229,13 +229,14 @@ class BlockBase(VerifiableMixin):
         Returns:
             bool: True if valid. False otherwise.
         """
-        if not self.Hash.ToBytes() == GetGenesis().Hash.ToBytes():
-            return False
+
+        if self.Hash.ToBytes() == GetGenesis().Hash.ToBytes():
+            return True
 
         bc = GetBlockchain()
 
-        if not bc.ContainsBlock(self.Index):
-            return False
+        if bc.ContainsBlock(self.Index):
+            return True
 
         if self.Index > 0:
             prev_header = GetBlockchain().GetHeader(self.PrevHash.ToBytes())

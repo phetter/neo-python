@@ -1,4 +1,3 @@
-import random
 from logzero import logger
 from neo.Core.Block import Block
 from neo.Core.Blockchain import Blockchain as BC
@@ -8,30 +7,24 @@ from neo.Core.TX.MinerTransaction import MinerTransaction
 from neo.Network.NeoNode import NeoNode
 from neo.Settings import settings
 from twisted.internet.protocol import ReconnectingClientFactory
-from twisted.internet import reactor
+from twisted.internet import reactor, task
+from datetime import datetime
+import random
 
 
 class NeoClientFactory(ReconnectingClientFactory):
     protocol = NeoNode
-    maxRetries = 1
-
-    def clientConnectionFailed(self, connector, reason):
-        address = "%s:%s" % (connector.host, connector.port)
-        logger.debug("Dropped connection from %s " % address)
-        for peer in NodeLeader.Instance().Peers:
-            if peer.Address == address:
-                peer.connectionLost()
+    maxRetries = 2
 
 
 class NodeLeader():
     __LEAD = None
 
-    Peers = []
-
-    UnconnectedPeers = []
-
-    ADDRS = []
-
+    Peers = None
+    UnconnectedPeers = None
+    PendingPeers = None
+    BadPeers = None
+    ConnectToPeerLoop = None
     NodeId = None
 
     _MissedBlocks = []
@@ -48,6 +41,12 @@ class NodeLeader():
     NodeCount = 0
 
     ServiceEnabled = False
+
+    snapshot_height = None
+    snapshot_time = None
+    current_bpm = 1
+    orig_peer_max = None
+    cache_counts = None
 
     @staticmethod
     def Instance():
@@ -76,50 +75,70 @@ class NodeLeader():
         Returns:
 
         """
-        self.Peers = []
+        self.Peers = set()
         self.UnconnectedPeers = []
-        self.ADDRS = []
+        self.PendingPeers = set()
+        self.BadPeers = set()
         self.MissionsGlobal = []
+        self.cache_counts = []
         self.NodeId = random.randint(1294967200, 4294967200)
+
+        self.snapshot_time = datetime.utcnow()
+        self.snapshot_height = BC.Default().Height
+        self.orig_peer_max = settings.CONNECTED_PEER_MAX
+
+        self.ConnectToPeerLoop = task.LoopingCall(self.DoConnectToPeer)
+        self.ConnectToPeerLoop.start(5)
 
     def Restart(self):
         if len(self.Peers) == 0:
-            self.ADDRS = []
+            self.cache_counts = []
+            self.UnconnectedPeers = []
+            self.PendingPeers = set()
+            self.BadPeers = set()
             self.Start()
+            self.ConnectToPeerLoop.start(5)
 
     def Start(self):
         """Start connecting to the node list."""
-        # start up endpoints
-        start_delay = 0
-        for bootstrap in settings.SEED_LIST:
-            host, port = bootstrap.split(":")
-            self.ADDRS.append('%s:%s' % (host, port))
-            reactor.callLater(start_delay, self.SetupConnection, host, port)
-            start_delay += 1
+        for idx, bootstrap in enumerate(settings.SEED_LIST):
+            self.PendingPeers.add(bootstrap)
+            host, port = bootstrap.split(':')
+            self.SetupConnection(host, port, timeout=10)
 
-    def RemoteNodePeerReceived(self, host, port, index):
-        addr = '%s:%s' % (host, port)
-        if addr not in self.ADDRS and len(self.Peers) < settings.CONNECTED_PEER_MAX:
-            self.ADDRS.append(addr)
-            reactor.callLater(index * 10, self.SetupConnection, host, port)
+    def RemoteNodePeerReceived(self, networkAddressWithTime):
+        addr = "%s:%s" % (networkAddressWithTime.Address, networkAddressWithTime.Port)
+        if addr not in self.BadPeers:
+            self.UnconnectedPeers.append(networkAddressWithTime)
 
-    def SetupConnection(self, host, port):
+    def DoConnectToPeer(self):
+
+        if len(self.UnconnectedPeers):
+            random.shuffle(self.UnconnectedPeers)
+            peer = self.UnconnectedPeers.pop(0)
+            peer_addr = '%s:%s' % (peer.Address, peer.Port)
+            self.PendingPeers.add(peer_addr)
+            host, port = peer_addr.split(':')
+            self.SetupConnection(host, port)
+
+    def SetupConnection(self, host, port, timeout=5):
         if len(self.Peers) < settings.CONNECTED_PEER_MAX:
-            reactor.connectTCP(host, int(port), NeoClientFactory())
+            reactor.connectTCP(host, int(port), NeoClientFactory(), timeout=timeout)
 
     def OnUpdatedMaxPeers(self, old_value, new_value):
-
+        logger.warn("Changing max peers from %s to %s " % (old_value, new_value))
         if new_value < old_value:
             num_to_disconnect = old_value - new_value
             logger.warning("DISCONNECTING %s Peers, this may show unhandled error in defer " % num_to_disconnect)
             for p in self.Peers[-num_to_disconnect:]:
                 p.Disconnect()
         elif new_value > old_value:
-            for p in self.Peers:
-                p.RequestPeerInfo()
+            # we'll let the peers request more themselves
+            pass
 
     def Shutdown(self):
         """Disconnect all connected peers."""
+
         for p in self.Peers:
             p.Disconnect()
 
@@ -131,14 +150,15 @@ class NodeLeader():
             peer (NeoNode): instance.
         """
 
-        if peer not in self.Peers:
+        if peer.Address in self.PendingPeers:
+            self.PendingPeers.remove(peer.Address)
 
-            if len(self.Peers) < settings.CONNECTED_PEER_MAX:
-                self.Peers.append(peer)
-            else:
-                if peer.Address in self.ADDRS:
-                    self.ADDRS.remove(peer.Address)
-                peer.Disconnect()
+        if len(self.Peers) < settings.CONNECTED_PEER_MAX:
+            self.Peers.add(peer)
+
+        else:
+
+            peer.Disconnect()
 
     def RemoveConnectedPeer(self, peer):
         """
@@ -147,10 +167,18 @@ class NodeLeader():
         Args:
             peer (NeoNode): instance.
         """
-        if peer in self.Peers:
-            self.Peers.remove(peer)
-        if peer.Address in self.ADDRS:
-            self.ADDRS.remove(peer.Address)
+        try:
+            logger.warn("Removing connected peer %s " % peer.Address)
+            if peer.Address in self.PendingPeers:
+                self.PendingPeers.remove(peer.Address)
+
+            if peer in self.Peers:
+                self.Peers.remove(peer)
+        except Exception as e:
+            logger.error("Could not remove peer %s: %s " % (peer.Address, e))
+
+#        self.UnconnectedPeers.add(peer.Address)
+
         if len(self.Peers) == 0:
             reactor.callLater(10, self.Restart)
 

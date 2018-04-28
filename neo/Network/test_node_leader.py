@@ -11,6 +11,7 @@ from neo.Wallets.utils import to_aes_key
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Core.TX.Transaction import ContractTransaction, TransactionOutput
 from neo.Core.TX.MinerTransaction import MinerTransaction
+from neo.Network.Payloads.NetworkAddressWithTime import NetworkAddressWithTime
 
 
 class Endpoint():
@@ -37,14 +38,13 @@ class LeaderTestCase(WalletFixtureTestCase):
 
     @classmethod
     def tearDown(self):
-        NodeLeader.Instance().Peers = []
+        NodeLeader.Instance().Peers = set()
         NodeLeader.__LEAD = None
 
     def test_initialize(self):
 
         leader = NodeLeader.Instance()
-        self.assertEqual(leader.Peers, [])
-        self.assertEqual(leader.ADDRS, [])
+        self.assertEqual(leader.Peers, set())
         self.assertEqual(leader.UnconnectedPeers, [])
 
     def test_peer_adding(self):
@@ -54,7 +54,7 @@ class LeaderTestCase(WalletFixtureTestCase):
         def mock_call_later(delay, method, *args):
             method(*args)
 
-        def mock_connect_tcp(host, port, factory):
+        def mock_connect_tcp(host, port, factory, timeout=10):
             node = NeoNode()
             node.endpoint = Endpoint(host, port)
             leader.AddConnectedPeer(node)
@@ -76,8 +76,10 @@ class LeaderTestCase(WalletFixtureTestCase):
                         leader.Start()
                         self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
 
+                        n = NetworkAddressWithTime(address='hello.com', port=1234)
+
                         # now test adding another
-                        leader.RemoteNodePeerReceived('hello.com', 1234, 6)
+                        leader.RemoteNodePeerReceived(n)
 
                         # it shouldnt add anything so it doesnt go over max connected peers
                         self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
@@ -85,35 +87,19 @@ class LeaderTestCase(WalletFixtureTestCase):
                         # test adding peer
                         peer = NeoNode()
                         peer.endpoint = Endpoint('hellloo.com', 12344)
-                        leader.ADDRS.append('hellloo.com:12344')
                         leader.AddConnectedPeer(peer)
                         self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
 
                         # now get a peer
-                        peer = leader.Peers[0]
+                        peer = leader.Peers.pop()
 
                         leader.RemoveConnectedPeer(peer)
 
                         self.assertEqual(len(leader.Peers), len(settings.SEED_LIST) - 1)
-                        self.assertEqual(len(leader.ADDRS), len(settings.SEED_LIST) - 1)
 
                         # now test adding another
-                        leader.RemoteNodePeerReceived('hello.com', 1234, 6)
-
-                        self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
-
-                        # now on updated max peers test
-                        leader.OnUpdatedMaxPeers(settings.CONNECTED_PEER_MAX, settings.CONNECTED_PEER_MAX - 1)
-
-                        leader.OnUpdatedMaxPeers(settings.CONNECTED_PEER_MAX - 1, 10)
-
-                        # now if we remove all peers, it should restart
-                        peers = leader.Peers[:]
-                        for peer in peers:
-                            leader.RemoveConnectedPeer(peer)
-
-                        # and peers should be equal to the seed list
-                        self.assertEqual(len(leader.Peers), len(settings.SEED_LIST))
+                        n2 = NetworkAddressWithTime(address='hello2.com', port=1234)
+                        leader.RemoteNodePeerReceived(n2)
 
                         # test reset
                         leader.ResetBlockRequestsAndCache()
@@ -137,7 +123,7 @@ class LeaderTestCase(WalletFixtureTestCase):
         def mock_call_later(delay, method, *args):
             method(*args)
 
-        def mock_connect_tcp(host, port, factory):
+        def mock_connect_tcp(host, port, factory, timeout=10):
             node = NeoNode()
             node.endpoint = Endpoint(host, port)
             leader.AddConnectedPeer(node)

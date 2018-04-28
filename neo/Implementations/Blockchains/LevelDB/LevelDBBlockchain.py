@@ -50,6 +50,7 @@ class LevelDBBlockchain(Blockchain):
     _disposed = False
 
     _verify_blocks = False
+    _verify_headers = False
 
     # this is the version of the database
     # should not be updated for network version changes
@@ -58,6 +59,7 @@ class LevelDBBlockchain(Blockchain):
     _persisting_block = None
 
     TXProcessed = 0
+    _tx_per_block_list = None
 
     @property
     def CurrentBlockHash(self):
@@ -99,12 +101,18 @@ class LevelDBBlockchain(Blockchain):
     def Path(self):
         return self._path
 
+    @property
+    def TXPerBlock(self):
+        avg = sum(self._tx_per_block_list) / len(self._tx_per_block_list)
+        return avg
+
     def __init__(self, path, skip_version_check=False):
         super(LevelDBBlockchain, self).__init__()
         self._path = path
 
         self._header_index = []
         self._header_index.append(Blockchain.GenesisBlock().Header.Hash.ToBytes())
+        self._tx_per_block_list = []
 
         self.TXProcessed = 0
 
@@ -409,6 +417,9 @@ class LevelDBBlockchain(Blockchain):
 
     def AddBlock(self, block):
 
+        if self._verify_blocks and not block.Verify():
+            return False
+
         if not block.Hash.ToBytes() in self._block_cache:
             self._block_cache[block.Hash.ToBytes()] = block
 
@@ -419,8 +430,6 @@ class LevelDBBlockchain(Blockchain):
 
         if block.Index == header_len:
 
-            if self._verify_blocks and not block.Verify():
-                return False
             self.AddHeader(block.Header)
 
         return True
@@ -586,7 +595,7 @@ class LevelDBBlockchain(Blockchain):
 
             if header.Index < count + len(self._header_index):
                 continue
-            if self._verify_blocks and not header.Verify():
+            if self._verify_headers and not header.Verify():
                 break
 
             count = count + 1
@@ -659,10 +668,11 @@ class LevelDBBlockchain(Blockchain):
 
         to_dispatch = []
 
+        self._tx_per_block_list.append(len(block.Transactions))
+
         with self._db.write_batch() as wb:
 
             wb.put(DBPrefix.DATA_Block + block.Hash.ToBytes(), amount_sysfee_bytes + block.Trim())
-
             for tx in block.Transactions:
 
                 wb.put(DBPrefix.DATA_Transaction + tx.Hash.ToBytes(), block.IndexBytes() + tx.ToArray())
@@ -812,6 +822,9 @@ class LevelDBBlockchain(Blockchain):
 
             for event in to_dispatch:
                 events.emit(event.event_type, event)
+
+            if len(self._tx_per_block_list) > 1000:
+                self._tx_per_block_list.pop(0)
 
     def PersistBlocks(self):
 
