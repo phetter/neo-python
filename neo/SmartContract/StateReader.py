@@ -114,6 +114,7 @@ class StateReader(InteropService):
         self.Register("Neo.Asset.GetIssuer", self.Asset_GetIssuer)
 
         self.Register("Neo.Contract.GetScript", self.Contract_GetScript)
+        self.Register("Neo.Contract.IsPayable", self.Contract_IsPayable)
 
         self.Register("Neo.Storage.GetContext", self.Storage_GetContext)
         self.Register("Neo.Storage.Get", self.Storage_Get)
@@ -861,6 +862,14 @@ class StateReader(InteropService):
         if contract is None:
             return False
         engine.EvaluationStack.PushT(contract.Code.Script)
+        return True
+
+    def Contract_IsPayable(self, engine):
+
+        contract = engine.EvaluationStack.Pop().GetInterface()
+        if contract is None:
+            return False
+        engine.EvaluationStack.PushT(contract.Payable)
         return True
 
     def Storage_GetContext(self, engine):

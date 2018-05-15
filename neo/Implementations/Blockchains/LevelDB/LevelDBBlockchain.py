@@ -35,6 +35,8 @@ from neocore.BigInteger import BigInteger
 from neo.EventHub import events
 
 from prompt_toolkit import prompt
+from neo.VM.ScriptBuilder import ScriptBuilder
+from neo.VM import OpCode
 
 
 class LevelDBBlockchain(Blockchain):
@@ -772,6 +774,31 @@ class LevelDBBlockchain(Blockchain):
 
                     if tx.Type != b'\x00' and tx.Type != 128:
                         logger.info("TX Not Found %s " % tx.Type)
+
+                receivers = set()
+                [receivers.add(o.ScriptHash) for o in tx.outputs]
+
+                for uint160 in receivers:
+
+                    contract = contracts.TryGet(uint160.ToBytes())
+                    if not contract:
+                        continue
+
+                    script_table = CachedScriptTable(contracts)
+                    service = StateMachine(accounts, validators, assets, contracts, storages, wb)
+
+                    engine = ApplicationEngine(TriggerType.ApplicationR, tx, script_table, service, Fixed8.Zero())
+                    engine.LoadScript(contract.Script, False)
+                    sb = ScriptBuilder()
+                    sb.push(0)
+                    sb.Emit(OpCode.PACK)
+                    sb.push("received")
+                    engine.LoadScript(binascii.unhexlify(sb.ToArray()), False)
+                    try:
+                        success = engine.Execute()
+                        service.ExecutionCompleted(engine, success)
+                    except Exception as e:
+                        service.ExecutionCompleted(engine, False, e)
 
             # do save all the accounts, unspent, coins, validators, assets, etc
             # now sawe the current sys block

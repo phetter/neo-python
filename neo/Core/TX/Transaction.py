@@ -24,6 +24,10 @@ from neo.Core.Helper import Helper
 from neo.Core.Witness import Witness
 from neocore.UInt256 import UInt256
 from neo.Core.AssetType import AssetType
+from neo.SmartContract.ApplicationEngine import ApplicationEngine
+from neo.SmartContract import TriggerType
+from neo.VM.ScriptBuilder import ScriptBuilder
+from neo.VM import OpCode
 
 
 class TransactionResult(EquatableMixin):
@@ -612,6 +616,9 @@ class Transaction(InventoryMixin):
         """
         logger.info("Verifying transaction: %s " % self.Hash.ToBytes())
 
+        if not self.VerifyReceivingScripts():
+            return False
+
         return Helper.VerifyScripts(self)
 
     #        logger.info("return true for now ...")
@@ -752,6 +759,42 @@ class Transaction(InventoryMixin):
                 realresults.append(TransactionResult(key, sum))
 
         return realresults
+
+    def VerifyReceivingScripts(self):
+
+        receivers = set()
+        [receivers.add(o.ScriptHash) for o in self.outputs]
+
+        for uint160 in receivers:
+
+            contract = GetBlockchain().GetContract(uint160.ToBytes())
+            if not contract:
+                continue
+
+            if not contract.Payable:
+                return False
+
+            state_reader = Helper.GetStateReader()
+            engine = ApplicationEngine(TriggerType.VerificatioR, self, GetBlockchain().Default, state_reader, Fixed8.Zero())
+            engine.LoadScript(contract.Script, False)
+            sb = ScriptBuilder()
+            sb.push(0)
+            sb.Emit(OpCode.PACK)
+            sb.push("receiving")
+            engine.LoadScript(binascii.unhexlify(sb.ToArray()), False)
+            try:
+                success = engine.Execute()
+                state_reader.ExecutionCompleted(engine, success)
+            except Exception as e:
+                state_reader.ExecutionCompleted(engine, False, e)
+
+            if engine.EvaluationStack.Count != 1 or not engine.EvaluationStack.Pop().GetBoolean():
+                Helper.EmitServiceEvents(state_reader)
+                return False
+
+            Helper.EmitServiceEvents(state_reader)
+
+        return True
 
 
 class ContractTransaction(Transaction):
