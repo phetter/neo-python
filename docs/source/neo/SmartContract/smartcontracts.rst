@@ -157,7 +157,7 @@ This command simply compiles the file and nothing else.  You could now use the c
 Build and test your contract
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Build and test is a much more useful command, since it allows you to not only compile the file, but also execute and inspect the results.  The only drawback is that the syntax is bit more complicated
+Build and test is a much more useful command, since it allows you to not only compile the file, but also execute and inspect the results.  The only drawback is that the syntax is a bit more complicated.
 
 View ContractParameterType list :ref:`ContractParameterTypes`
 
