@@ -169,7 +169,7 @@ The general syntax goes like this: ``build path/to/file.py test {input_params} {
 - ``{needs_dynamic_invoke}`` is also a boolean, indicating whether or not the SC will be calling another contract whose address it will not know until runtime.  This will most always be ``False``
 - ``params1 params2 etc...`` These are the parameters you are testing with.
 
-So for building and testing our ``sample1.py``, the syntax would be ``build docs/source/example/sample1.py test '' 01 False False``, where ``''`` indicates that no parameters are accepted and ``01`` indicates that it returns a boolean.  Lets try it out in the propmt
+So for building and testing our ``sample1.py``, the syntax would be ``build docs/source/example/sample1.py test '' 01 False False``, where ``''`` indicates that no parameters are accepted and ``01`` indicates that it returns a boolean.  Lets try it out in the prompt.
 
 .. code-block:: sh
 
