@@ -2,7 +2,7 @@
 Data Types in neo-python
 ------------------------
 
-There are a few data types that are good to be familiar with when using ``neo-python`` or the NEO blockchain in general.  It is useful to have an understanding of these in order to recognize them where they occur in various parts of the system in different formats, and how to work with them. The following section will give a quick overview of each data type and its general usage
+There are a few data types that are good to be familiar with when using ``neo-python`` or the NEO blockchain in general.  It is useful to have an understanding of these in order to recognize them where they occur in various parts of the system in different formats, and how to work with them. The following section will give a quick overview of each data type and its general usage.
 
 Note that these data types are implemented in the ``neocore`` project, but used heavily in ``neo-python``.
 
@@ -49,7 +49,7 @@ The ``Public Key`` above represents the x and y coordinates on the an `ECDSA <ht
     'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy'
     >>>
 
-If you are interested in the implementation details of the ``KeyPair``, ``UInt160``, or ``Crypto`` package, have a look at the `neocore repository <https://github.com/CityOfZion/neo-python-core>`_
+If you are interested in the implementation details of the ``KeyPair``, ``UInt160``, or ``Crypto`` package, have a look at the `neocore repository <https://github.com/CityOfZion/neo-python-core>`_.
 
 
 UInt256
