@@ -199,7 +199,7 @@ Ok, so it looks like we will need to open a wallet to test our contract! Note th
 
   neo>
 
-And you have now built and tested your first SC.  If you would like to view the results of same contract as an integer, you can change the ``return_type`` and you will get output like this:
+And you have now built and tested your first SC.  If you would like to view the results of some contract as an integer, you can change the ``return_type`` and you will get output like this:
 
 .. code-block:: sh
 
@@ -217,7 +217,7 @@ And you have now built and tested your first SC.  If you would like to view the 
 
   neo>
 
-You may have noticed that even though there is a ``print`` command in the contract, you didn not see anything printed out.  Lets fix that by turning on smart contract events and running it again.
+You may have noticed that even though there is a ``print`` command in the contract, you did not see anything printed out.  Lets fix that by turning on smart contract events and running it again.
 
 .. code-block:: sh
 
@@ -242,14 +242,14 @@ You may have noticed that even though there is a ``print`` command in the contra
   neo>
 
 
-So what happened there?  We turned on SmartContractEvent logging in the prompt with ``config sc-events on``.  Then after running the same command as before, we get 3 extra lines of output.
+So what happened there?  We turned on SmartContractEvent logging in the prompt with ``config sc-events on``.  Then, after running the same command as before, we get 3 extra lines of output.
 
 - **SmartContract.Contract.Create** is the event that created your SmartContract event in the VM
 - **SmartContract.Runtime.Log** is the event where ``Hello World`` is printed for you
 - **SmartContract.Execution.Success** indicates that the execution of the SC finished in a successful state
 
 
-Ok now lets try a little more complex contract, detailed here as `sample2.py`
+Ok now lets try a little more complex contract, detailed here as `sample2.py`:
 
 .. code-block:: python3
 
