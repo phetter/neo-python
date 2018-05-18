@@ -134,7 +134,7 @@ Build Your Contract
 ^^^^^^^^^^^^^^^^^^^
 The first step to using SC ( Smart Contracts ) within the prompt is to build one.  This is a convienience method which uses the ``neo-boa`` compiler to compile your SC and save it in the ``.avm`` format.
 
-When building or importing a file or contract within the prompt, it is always best to use a relative path ( relative to the ``neo-python`` installation directory), though an absolute path will most likely work as well.
+When building or importing a file or contract within the prompt, it is always best to use a relative path ( relative to the ``neo-python`` installation directory ), though an absolute path will most likely work as well.
 
 
 This is sample1.py:
