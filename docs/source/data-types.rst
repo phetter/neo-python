@@ -55,7 +55,7 @@ If you are interested in the implementation details of the ``KeyPair``, ``UInt16
 UInt256
 -------
 
-A ``UInt256`` is used to represent a 32 byte hash.  This is normally a hash of a ``Transaction`` object or a ``Block``.  You will normally see it represented as a 64 character string, or a 66 character string with a ``0x`` hex specifier.  Below is a sample of how to interact with a ``UInt256``
+A ``UInt256`` is used to represent a 32 byte hash.  This is normally a hash of a ``Transaction`` object or a ``Block``.  You will normally see it represented as a 64 character string, or a 66 character string with a ``0x`` hex specifier.  Below is a sample of how to interact with a ``UInt256``.
 
 .. code-block:: sh
 
@@ -87,12 +87,12 @@ A ``UInt256`` is used to represent a 32 byte hash.  This is normally a hash of a
   '0x99e2be05956027b884cbf11cddbf9d2e5a8fb97ab18d5cde44d5ae2d4c980d18'
   >>>
 
-One thing to note, while we normally see the string, or 0x string version of a UInt256
+One thing to note, while we normally see the string, or 0x string version of a UInt256.
 
 UInt160
 -------
 
-A ``UInt160`` is used to represent a 20 byte hash, and might also be referred to as a ``ScriptHash``.  It is used to represent ``Address`` objects in NEO, whether they are normal addresses or addresses of Smart Contracts on the network. Below is a sample of how to interact with a ``UInt160``
+A ``UInt160`` is used to represent a 20 byte hash, and might also be referred to as a ``ScriptHash``.  It is used to represent ``Address`` objects in NEO, whether they are normal addresses or addresses of Smart Contracts on the network. Below is a sample of how to interact with a ``UInt160``.
 
 .. code-block:: sh
 
@@ -165,7 +165,7 @@ A ``Fixed8`` is used to represent numbers with 8 decimals in an integer format. 
 
 Here are a few thoughts to sum up the above:
 
-- if you want to create a Fixed8 and you have a decimal, the easiest thing to do is to use the ``Fixed8.FromDecimal`` method.
+- if you want to create a Fixed8 and you have a decimal, the easiest thing to do is to use the ``Fixed8.FromDecimal`` method
 - you can do math on Fixed8 objects, assuming each operand is a ``Fixed8``
 - doing math between a ``Fixed8`` and another type of number will raise an error
 - you can access the full value of a ``Fixed8`` object by accessing the ``value`` attribute
