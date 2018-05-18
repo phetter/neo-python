@@ -43,7 +43,7 @@ from ``vcpkg\installed\x64-windows\include\`` to ``e:\Program Files\Microsoft Vi
 
 from ``vcpkg\installed\x64-windows\lib\libleveldb.lib`` to ``e:\Program Files\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.12.25827\lib\x64\leveldb.lib``
 
-After that, clone the repository, move to the required version, install cython, build python extensions from c++ files and finally install plyvel.
+After that, clone the repository, move to the required version, install cython, build python extensions from C++ files and finally install plyvel.
 
 ::
 
