@@ -289,7 +289,7 @@ We will build and run with a few paramaters:
   [I 180302 22:30:01 InteropService:93] Trying to get big integer Array: ['None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'None']
 
 
-Oh no, what happened there!  Oh, it looks like we tried to test a contract that wanted some parameters but didn't supply them.  Note than if you're building and testing contracts and you see an error similar to this, that is probably the issue you are running into.  Lets try that again with some parameters.
+Oh no, what happened there!  Oh, it looks like we tried to test a contract that wanted some parameters but didn't supply them.  Note that if you're building and testing contracts and you see an error similar to this, that is probably the issue you are running into.  Lets try that again with some parameters.
 
 .. code-block:: sh
 
@@ -506,7 +506,7 @@ Here is where, if you really really want to spend the Gas to deploy your contrac
   Relayed Tx: f8ad261d28bf4bc5544e47f9bc3fff85f85ee674f14162dac81dd56bf73cf0a3
   neo>
 
-Now you have deployed your contract to the network. If all goes well, it will soon be deployed. To determine when it has been deployed, you can either search for the ``txid`` on the blockchain, or search for the contract hash
+Now you have deployed your contract to the network. If all goes well, it will soon be deployed. To determine when it has been deployed, you can either search for the ``txid`` on the blockchain, or search for the contract hash.
 
 .. code-block:: sh
 
